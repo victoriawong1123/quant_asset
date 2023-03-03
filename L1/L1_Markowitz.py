@@ -1,8 +1,6 @@
 import pandas as pd
 import numpy as np
-import scipy as sp
 from scipy.optimize import minimize
-
 
 df = pd.read_excel(r'Data_Stocks.xlsx')
 
@@ -12,6 +10,8 @@ derive the optimal portfolio in the simplest case, with risk aversion parameter 
 df['Weekday'] = [i.weekday() for i in df['Dates']]
 df.set_index('Dates', inplace=True)
 stocks_only = df[df.columns.difference(['Weekday'])]
+
+
 # print(stocks_only.head(5))
 
 
@@ -23,10 +23,10 @@ def simple_returns(stock, period, compounded=True):
     :type period: object
     """
     if not compounded:
-        stock_returns = stock/stock.shift(periods=period)-1
+        stock_returns = stock / stock.shift(periods=period) - 1
     elif compounded:
         stock_returns = np.log(stock / stock.shift(periods=period))
-    stock_returns = stock_returns.iloc[period+1:, 0:-1]
+    stock_returns = stock_returns.iloc[period + 1:, 0:-1]
     stock_returns.sort_index()
     return stock_returns
 
@@ -49,14 +49,27 @@ def initial_weight(assets):
     init = []
     n = len(assets)
     for i in range(n):
-        init.append(1/n)
+        init.append(1 / n)
     return init
 
 
 # Deriving the mean variance portfolio depending on whether
 # we are including risk-free assets.
-# def mean_var_port(means, vcv, rf_asset=False):
-#     if not rf_asset:
-#         init_weight = pd.DataFrame(initial_weight(means))
-#         objective = 1/2 * init_weight.transpose() * stock_vcv * init_weight
-#         constraint1 = means.transpose() * init_weight - means.transpose() * ini
+def mean_var_port(means, vcv, rf_asset=False):
+    if not rf_asset:
+        init_weight = np.asarray(initial_weight(means))
+
+        objective_func = lambda a: a.T @ vcv @ a
+        # constraint1 = LinearConstraint(init_weight.T @ (np.zeros(len(init_weight))+1) - 1)
+        cons = {
+            'type': 'eq',
+            'fun': lambda a: a.T @ (np.zeros(len(a)) + 1) - 1
+        }
+        bnds = [(0, None) for i in range(len(init_weight))]
+        port_weight = minimize(objective_func, x0=init_weight, constraints=cons, bounds=bnds)
+        return port_weight
+
+
+if __name__ == '__main__':
+    res = mean_var_port(stock_mean, stock_vcv, rf_asset=False)
+    print(res)

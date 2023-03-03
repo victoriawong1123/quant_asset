@@ -1,5 +1,8 @@
 import pandas as pd
 import numpy as np
+import scipy as sp
+from scipy.optimize import minimize
+
 
 df = pd.read_excel(r'Data_Stocks.xlsx')
 
@@ -29,12 +32,31 @@ def simple_returns(stock, period, compounded=True):
 
 
 """The different moments of our returns"""
-StockReturn = simple_returns(stocks_only, 1, False)
-stock_mean = StockReturn.mean()
-stock_vol = StockReturn.std()
-stock_skew = StockReturn.skew()
-stock_kurt = StockReturn.kurtosis()
+StockReturn = pd.DataFrame(simple_returns(stocks_only, 1, False))
+stock_mean = pd.DataFrame(StockReturn.mean())
+stock_vol = pd.DataFrame(StockReturn.std())
+stock_skew = pd.DataFrame(StockReturn.skew())
+stock_kurt = pd.DataFrame(StockReturn.kurtosis())
+stock_vcv = StockReturn.cov()
 StockReturn.describe()
 
 
-def mean_variance_port(means, vol):
+# def obj_without_rf():
+
+
+# Initial guess of portfolio weight, setting it to equally weighted for now
+def initial_weight(assets):
+    init = []
+    n = len(assets)
+    for i in range(n):
+        init.append(1/n)
+    return init
+
+
+# Deriving the mean variance portfolio depending on whether
+# we are including risk-free assets.
+# def mean_var_port(means, vcv, rf_asset=False):
+#     if not rf_asset:
+#         init_weight = pd.DataFrame(initial_weight(means))
+#         objective = 1/2 * init_weight.transpose() * stock_vcv * init_weight
+#         constraint1 = means.transpose() * init_weight - means.transpose() * ini

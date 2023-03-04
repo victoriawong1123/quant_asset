@@ -55,11 +55,11 @@ def initial_weight(assets):
 
 # Deriving the mean variance portfolio depending on whether
 # we are including risk-free assets.
-def mean_var_port(means, vcv, rf_asset=False):
+def mean_var_port(means, vcv, rf_asset=False, risk_aversion=30):
     if not rf_asset:
         init_weight = np.asarray(initial_weight(means))
 
-        objective_func = lambda a: a.T @ vcv @ a
+        objective_func = lambda a: (risk_aversion/2) * (a.T @ vcv @ a)
         # constraint1 = LinearConstraint(init_weight.T @ (np.zeros(len(init_weight))+1) - 1)
         cons = {
             'type': 'eq',
@@ -68,6 +68,10 @@ def mean_var_port(means, vcv, rf_asset=False):
         bnds = [(0, None) for i in range(len(init_weight))]
         port_weight = minimize(objective_func, x0=init_weight, constraints=cons, bounds=bnds)
         return port_weight
+    # if rf_asset:
+    #     objective_func = lambda a: a.T @ vcv @ a
+    #     return 0
+
 
 
 if __name__ == '__main__':
